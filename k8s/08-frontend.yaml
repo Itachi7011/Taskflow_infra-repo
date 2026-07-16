@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: sam929/taskflow-frontend:ad1503f
+          image: sam929/taskflow-frontend:458f57b
           ports:
             - containerPort: 8080
           resources:

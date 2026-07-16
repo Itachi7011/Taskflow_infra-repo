@@ -18,7 +18,7 @@ spec:
           # yourdockerhubusername -> swap for your real docker hub username.
           # the :latest-tag here is what CI/CD rewrites to a specific
           # commit sha/tag every time a build finishes (see argocd/README)
-          image: sam929/taskflow-backend:ad1503f
+          image: sam929/taskflow-backend:458f57b
           ports:
             - containerPort: 5000
           envFrom:
