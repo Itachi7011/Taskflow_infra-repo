@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taskflow-worker
+  namespace: taskflow
+spec:
+  replicas: 2 # baseline worker count, HPA (06-worker-hpa.yaml) can scale this up
+  selector:
+    matchLabels:
+      app: taskflow-worker
+  template:
+    metadata:
+      labels:
+        app: taskflow-worker
+    spec:
+      # gives BRPOP a moment to finish its current job before the pod
+      # gets killed during a scale down or rollout
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: worker
+          image: sam929/taskflow-worker:v2
+          envFrom:
+            - configMapRef:
+                name: taskflow-config
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "150Mi"
+            limits:
+              cpu: "300m"
+              memory: "300Mi"
+          # the worker has no http server, so we check on the process
+          # itself instead of hitting an endpoint
+          livenessProbe:
+            exec:
+              command: ["pgrep", "-f", "worker.py"]
+            initialDelaySeconds: 10
+            periodSeconds: 20

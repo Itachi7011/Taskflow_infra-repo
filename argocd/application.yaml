@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: taskflow
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    # replace with your actual infra repo url once you push this
+    repoURL: https://github.com/yourusername/taskflow-infra.git
+    targetRevision: main
+    path: k8s
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: taskflow
+
+  syncPolicy:
+    automated:
+      prune: true # remove resources that are deleted from git
+      selfHeal: true # revert any manual/out-of-band cluster changes back to what git says
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

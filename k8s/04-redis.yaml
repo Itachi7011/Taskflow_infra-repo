@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: taskflow-redis
+  namespace: taskflow
+spec:
+  serviceName: taskflow-redis
+  replicas: 1
+  selector:
+    matchLabels:
+      app: taskflow-redis
+  template:
+    metadata:
+      labels:
+        app: taskflow-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          # appendonly gives us durability across pod restarts - without
+          # it, a redis restart would silently drop any queued jobs that
+          # hadnt been picked up by a worker yet
+          args: ["redis-server", "--appendonly", "yes"]
+          ports:
+            - containerPort: 6379
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 10
+            periodSeconds: 15
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: taskflow-redis
+  namespace: taskflow
+spec:
+  selector:
+    app: taskflow-redis
+  ports:
+    - port: 6379
+      targetPort: 6379
